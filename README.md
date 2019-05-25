@@ -1,2 +1,2 @@
-# empy-vega
+# empython-vega
 EM computation using python
