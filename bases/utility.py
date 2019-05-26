@@ -33,7 +33,7 @@ class Layer(object):
 
         return self.mat.isIsotropic()
 
-    def getEPSFourierCoeffs(self, wl, n, anisotropic=True):
+    def getEPSFourierCoeffs(self, wl, n, anisotropic = True):
         """Return the Fourier coefficients of eps and eps**-1, orders [-n, n]."""
 
         nood = 2 * n + 1
@@ -51,15 +51,15 @@ class Layer(object):
             EPS = numpy.zeros((3, 3, 2 * hmax + 1), dtype=complex)
             EPS1 = numpy.zeros_like(EPS)
             EPS[:, :, hmax] = numpy.squeeze(
-                self.mat.epsilonTensor(wl)) / EMpy.constants.eps0
+                self.mat.epsilonTensor(wl)) / bases.constants.eps0
             EPS1[:, :, hmax] = scipy.linalg.inv(EPS[:, :, hmax])
             return EPS, EPS1
 
-    def capacitance(self, area=1., wl=0):
+    def capacitance(self, area=1.0, wl = 0):
         """Capacitance = eps0 * eps_r * area / thickness."""
 
         if self.isIsotropic():
-            eps = EMpy.constants.eps0 * numpy.real(self.mat.n(wl).item()**2)
+            eps = bases.constants.eps0 * numpy.real(self.mat.n(wl).item()**2)
         else:
             # suppose to compute the capacitance along the z-axis
             eps = self.mat.epsilonTensor(wl)[2, 2, 0]
@@ -71,7 +71,226 @@ class Layer(object):
 
         return "%s, thickness: %g" % (self.mat, self.thickness)
 
-    
+
+class Multilayer(object):
+    """A Multilayer is a list of layers with some more methods"""
+
+    def __init__(self, data = None):
+        """Initialize the data lilst."""
+        if data is None:
+            data = []
+        self.data = data[:]
+
+    def __delitem__(self, i):
+        """Delete an item from the list."""
+        del self.data[i]
+
+    def __getitem__(self, i):
+        """Get an item of the list of layers."""
+        return self.data[i]
+
+    def __getslice__(self, i, j):
+        """Get a Multilayer from a slice of layers."""
+        return Multilayer(self.data[i:j])
+
+    def __len__(self):
+        """Return the number of layers."""
+        return len(self.data)
+
+    def __setitem__(self, i, item):
+        """Set an item of the list of layers."""
+        self.data[i] = item
+
+    def __setslice__(self, i, j, other):
+        """Set a slice of layers."""
+        self.data[i:j] = other
+
+    def append(self, item):
+        """Append a leyer to the list of layers."""
+        self.data.append(item)
+
+    def extend(self, other):
+        """Extend the layers list with other layers."""
+        self.data.extend(other)
+
+    def insert(self, i, item):
+        """Insert a new layer in the layer's list at the position i."""
+        self.data.insert(i, item)
+
+    def remove(self, item):
+        """Remove item from a layers list"""
+        self.data.remove(item)
+
+
+    def pop(self, i = -1):
+        return self.data.pop(i)
+
+    def isIsotropic(self):
+        """Return True of all the layers of Multilayer are isotropic else False."""
+        return numpy.asarray([m.isIsotropic() for m in self.data]).all()
+
+    def __str__(self):
+        """Return a description of the Multilayer"""
+        if self.__len__() == 0.0:
+            list_str = "<empty>"
+        else:
+            list_str = '\n'.join(['%d: %s' % (i1, 1.0__str__()) for il, l in enumerate(self.data)])
+            return 'Multilayer \n...............\n' + list_str
+
+
+class Slice(Multilayer):
+    def __init__(self, width, *argv):
+        Multilayer.__init__(self, *argv)
+        self.width = width
+
+    def heights(self):
+        return numpy.array([l.thickness for l in self])
+
+    def ys(self):
+        return numpy.r_[0.0, self.heights().cumsum()]
+
+    def height(self):
+        return self.heights().sum()
+
+    def find_layer(self, y):
+        l = numpy.where(self.ys() <= y)[0]
+        if len(l) > 0:
+            return self[min(l[-1], len(self) - 1)]
+        else:
+            return self[0]
+
+    def plot(self, x0, x1, nmin, nmax, wl = 1.55e-6):
+        try:
+            import pylab
+        except ImportError:
+            warning('no pylab installed')
+            return
+        y0 = 0
+        # ytot = sum([l.thickness for l in self])
+        for l in self:
+            y1 = y0 + l.thickness
+            n = l.mat.n(wl)
+            r = 1.0 - (1.0 * (n - nmin) / (nmax - nmin))
+            pylab.fill([x0, x1, x1, x0], [y0, y0, y1, y1], ec = 'yellow', fc = (r, r, r), alpha = 0.5)
+            y0 = y1
+        pylab.axis('image')
+
+    def __str__(self):
+        return 'width = %e\n%s' % (self.width, Multilayer.__str__(self))
+
+
+class CrossSection(list):
+
+    def __str__(self):
+        return '\n'.join('%s' % s for s in self)
+
+    def widths(self):
+        return numpy.array([s.width for s in self])
+
+    def xs(self):
+        return numpy.r_[0.0, self.widths().cumsum()]
+
+    def ys(self):
+        tmp = numpy.concatenate([s.ys() for s in self])
+        # get rid of numerical errors
+        tmp = numpy.round(tmp * 1e10) * 1e-10
+        return numpy.unique(tmp)
+
+    def width(self):
+        return self.widths().sum()
+
+    def grid(self, nx_per_region, ny_per_region):
+
+        xs = self.xs()
+        ys = self.ys()
+
+        nxregions = len(xs) - 1
+        nyregions = len(ys) - 1
+
+        if numpy.isscalar(nx_per_region):
+            nx = (nx_per_region,) * nxregions
+        elif len(nx_per_region) != nxregions:
+            raise ValueError('wrong nx_per_region dim')
+        else:
+            nx = nx_per_region
+
+        if numpy.isscalar(ny_per_region):
+            ny = (ny_per_region,) * nyregions
+        elif len(ny_per_region) != nyregions:
+            raise ValueError('wrong ny_per_region dim')
+        else:
+            ny = ny_per_region
+
+        X = []
+        x0 = xs[0]
+        for x, n in zip(xs[1:], nx):
+            X.append(numpy.linspace(x0, x, n + 1)[:-1])
+            x0 = x
+        X = numpy.concatenate(X)
+        X = numpy.r_[X, x0]
+
+        Y = []
+        y0 = ys[0]
+        for y, n in zip(ys[1:], ny):
+            Y.append(numpy.linspace(y0, y, n + 1)[:-1])
+            y0 = y
+        Y = numpy.concatenate(Y)
+        Y = numpy.r_[Y, y0]
+
+        return X, Y
+
+    def find_slice(self, x):
+        s = numpy.where(self.xs() <= x)[0]
+        if len(s) > 0:
+            return self[min(s[-1], len(self) - 1)]
+        else:
+            return self[0]
+
+    def _epsfunc(self, x, y, wl):
+        if numpy.isscalar(x) and numpy.isscalar(y):
+            return self.find_slice(x).find_layer(y).mat.n(wl)**2
+        else:
+            raise ValueError('only scalars, please!')
+
+    def epsfunc(self, x, y, wl):
+        eps = numpy.ones((len(x), len(y)), dtype=complex)
+        for ix, xx in enumerate(x):
+            for iy, yy in enumerate(y):
+                eps[ix, iy] = self._epsfunc(xx, yy, wl)
+        return eps
+
+    def plot(self, wl = 1.55e-6):
+        try:
+            import pylab
+        except ImportError:
+            warning('no pylab installed')
+            return
+        x0 = 0
+        ns = [[l.mat.n(wl) for l in s] for s in self]
+        nmax = max(max(ns))
+        nmin = min(min(ns))
+        for s in self:
+            x1 = x0 + s.width
+            s.plot(x0, x1, nmin, nmax, wl = wl)
+            x0 = x1
+        pylab.axis('image')
+
+class Peak(object):
+
+    def __init__(self, x, y, idx, x0, y0, xFWHM_1, xFWHM_2):
+        self.x = x
+        self.y = y
+        self.idx = idx
+        self.x0 = x0
+        self.y0 = y0
+        self.xFWHM_1 = xFWHM_1
+        self.xFWHM_2 = xFWHM_2
+        self.FWHM = numpy.abs(xFWHM_2 - xFWHM_1)
+
+    def __str__(self):
+        return '(%g, %g) [%d, (%g, %g)] FWHM = %s' % ( self.x, self.y, self.idx, self.x0, self.y0, self.FWHM)
+        
+        
 def deg2rad(x):
     """Convert deg to rad"""
     return x / 180.0 * numpy.pi
@@ -164,7 +383,7 @@ def group_delay and dispersion(wls, y):
 
     df = numpy.diff(f)
     toPSNM = 1E12 / 1E9
-    cnmps = EMpy.constants.cLight / toPSNM
+    cnmps = bases.constants.cLight / toPSNM
 
     # phase
     phi = numpy.unwrap(4.0 * numpy.angle(y)) / 4.0
@@ -193,15 +412,15 @@ def loss_cm2rix(n_real, alpha_cm1, wl):
     """Return complex refractive index, 
     given real index (n_real), absorption coefficient (alpha_cm1) in cm^-1, and wavelength (wl) in meters.
     ----> Passing more than one argument as array, will return erroneous result."""
-    ni = 100.0 * alpha_cm1 * wl /(numpy.pi * 4.0)
-    return (n_real - 1j*ni)
+    ni = 100.0 * alpha_cm1 * wl / (numpy.pi * 4.0)
+    return (n_real - 1j * ni)
 
 
 def loss_m2rix(n_real, alpha_m1, wl):
     """Return complex refractive index, 
     given real index (n_real), absorption coefficient (alpha_m1) in m^-1, and wavelength (wl) in meters.
     Passing more than one argument as array, will return erroneous result."""
-    ni = alpha_m1 * wl /(numpy.pi * 4.0)
+    ni = alpha_m1 * wl / (numpy.pi * 4.0)
     return (n_real - 1j * ni)
 
 
@@ -245,7 +464,7 @@ def find_peaks(x, y, threshold=1e-6):
     # refine search with splines
     tck = scipy.interpolate.splrep(x, y)
     # look for zero derivative
-    absdy = lambda x_: numpy.abs(scipy.interpolate.splev(x_, tck, der=1))
+    absdy = lambda x_: numpy.abs(scipy.interpolate.splev(x_, tck, der = 1))
 
     peaks = []
     for idx in idxs:
@@ -253,7 +472,7 @@ def find_peaks(x, y, threshold=1e-6):
         # look around the candidate
         xtol = (x.max() - x.min()) * 1e-6
         xopt = scipy.optimize.fminbound(
-            absdy, x[idx - 1], x[idx + 1], xtol=xtol, disp=False)
+            absdy, x[idx - 1], x[idx + 1], xtol = xtol, disp = False)
         yopt = scipy.interpolate.splev(xopt, tck)
 
         if yopt > threshold * y.max():
@@ -283,7 +502,7 @@ def find_peaks(x, y, threshold=1e-6):
             return -1
         return 1
 
-    peaks.sort(cmp=cmp_y)
+    peaks.sort(cmp = cmp_y)
     return peaks
 
 def cond(M):
@@ -323,7 +542,7 @@ def centered2d(x):
 
 def blackbody(f, T):
     return 2.0 * bases.constants.hPlank * f**3 / (bases.constants.cLight**2) * 1.0 / (
-        numpy.exp(EMpy.constants.hPlank * f / (bases.constants.kB * T)) - 1)
+        numpy.exp(bases.constants.hPlank * f / (bases.constants.kB * T)) - 1)
 
 
 def warning(s):
