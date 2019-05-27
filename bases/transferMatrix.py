@@ -12,7 +12,7 @@ __author__ = 'Abhijit Bhattacharyya'
 
 import scipy as S
 from scipy.linalg import inv
-from bases.utils import snell, norm
+from bases.utility import snell, norm
 from bases.constants import cLight, mu0
 
 #import gnuplot  ?????? I wish matpotlib
@@ -31,7 +31,7 @@ class TransferMatrix(object):
         self.multilayer = m.simplify()
 
         
-class IsotropicTranferMatrix(TransferMatrix):
+class IsotropicTransferMatrix(TransferMatrix):
     def __init__(self, multilayer, theta_inc):
 
         """ set multilayer and incident angle
@@ -44,7 +44,7 @@ class IsotropicTranferMatrix(TransferMatrix):
         TransferMatrix.__init__(self, multilayer)
         self.theta_inc = theta_inc
 
-        def solve(self, wls):
+    def solve(self, wls):
         """Isotropic solver.
         INPUT
         wls = wavelengths to scan (any asarray-able object).
@@ -126,7 +126,7 @@ class IsotropicTranferMatrix(TransferMatrix):
         return 'ISOTROPIC TRANSFER MATRIX SOLVER\n\n%s\n\ntheta inc = %g' %(self.multilayer.__str__(), self.theta_inc)
 
 
-    class AnisotropicTransferMatrix(TransferMatrix):
+class AnisotropicTransferMatrix(TransferMatrix):
 
     def __init__(self, multilayer, theta_inc_x, theta_inc_y):
         """Set the multilayer and the incident angle.
@@ -199,14 +199,14 @@ class IsotropicTranferMatrix(TransferMatrix):
             v = S.zeros((4, 3), dtype=complex)
 
             for i, g in enumerate(gamma):
-                H = K + [[-beta2 - g ** 2, alpha * beta, alpha * g],
-                         [alpha * beta, -alpha2 - g ** 2, beta * g],
+                H = K + [[-beta2 - g**2, alpha * beta, alpha * g],
+                         [alpha * beta, -alpha2 - g**2, beta * g],
                          [alpha * g, beta * g, -alpha2 - beta2]]
-                v[i, :] = [(K[1, 1] - alpha2 - g ** 2) * (K[2, 2] - alpha2 - beta2) - (K[1, 2] + beta * g) ** 2,
+                v[i, :] = [(K[1, 1] - alpha2 - g**2) * (K[2, 2] - alpha2 - beta2) - (K[1, 2] + beta * g)**2,
                            (K[1, 2] + beta * g) * (K[2, 0] + alpha * g) -
                            (K[0, 1] + alpha * beta) * (K[2, 2] - alpha2 - beta2),
                            (K[0, 1] + alpha * beta) * (K[1, 2] + beta * g) -
-                           (K[0, 2] + alpha * g) * (K[1, 1] - alpha2 - g ** 2)]
+                           (K[0, 2] + alpha * g) * (K[1, 1] - alpha2 - g**2)]
 
             p3 = v[0, :]
             p3 /= norm(p3)
@@ -218,7 +218,7 @@ class IsotropicTranferMatrix(TransferMatrix):
             p2 /= norm(p2)
 
             p = S.array([p1, p2, p3, p4])
-            q = wl / (2. * S.pi * mu0 * cLight) * S.cross(k, p)
+            q = wl / (2.0 * S.pi * mu0 * cLight) * S.cross(k, p)
             return k, p, q
 
         nlayers = len(multilayer)
@@ -229,7 +229,7 @@ class IsotropicTranferMatrix(TransferMatrix):
         R = S.zeros((2, 2, self.wls.size))
         T = S.zeros((2, 2, self.wls.size))
 
-        epstot = S.zeros((3, 3, self.wls.size, nlayers), dtype=complex)
+        epstot = S.zeros((3, 3, self.wls.size, nlayers), dtype = complex)
         for i, l in enumerate(multilayer):
             epstot[:, :, :, i] = l.mat.epsilonTensor(self.wls)
 
@@ -237,28 +237,23 @@ class IsotropicTranferMatrix(TransferMatrix):
 
             epsilon = epstot[:, :, iwl, :]
 
-            kx = 2 * S.pi / wl * S.sin(theta_inc_x)
-            ky = 2 * S.pi / wl * S.sin(theta_inc_y)
-            x = S.array([1, 0, 0], dtype=float)
-            y = S.array([0, 1, 0], dtype=float)
-            z = S.array([0, 0, 1], dtype=float)
-            k = S.zeros((4, 3, nlayers), dtype=complex)
-            p = S.zeros((4, 3, nlayers), dtype=complex)
-            q = S.zeros((4, 3, nlayers), dtype=complex)
-            D = S.zeros((4, 4, nlayers), dtype=complex)
-            P = S.zeros((4, 4, nlayers), dtype=complex)
+            kx = 2.0 * S.pi / wl * S.sin(theta_inc_x)
+            ky = 2.0 * S.pi / wl * S.sin(theta_inc_y)
+            x = S.array([1, 0, 0], dtype = float)
+            y = S.array([0, 1, 0], dtype = float)
+            z = S.array([0, 0, 1], dtype = float)
+            k = S.zeros((4, 3, nlayers), dtype = complex)
+            p = S.zeros((4, 3, nlayers), dtype = complex)
+            q = S.zeros((4, 3, nlayers), dtype = complex)
+            D = S.zeros((4, 4, nlayers), dtype = complex)
+            P = S.zeros((4, 4, nlayers), dtype = complex)
 
             for i in range(nlayers):
-                k[:, :, i], p[:, :, i], q[:, :, i] =
-                find_roots(wl, epsilon[:, :, i], kx, ky)
-                D[:, :, i] = [[S.dot(x, p[0, :, i]), S.dot(x, p[1, :, i]),
-                               S.dot(x, p[2, :, i]), S.dot(x, p[3, :, i])],
-                              [S.dot(y, q[0, :, i]), S.dot(y, q[1, :, i]),
-                               S.dot(y, q[2, :, i]), S.dot(y, q[3, :, i])],
-                              [S.dot(y, p[0, :, i]), S.dot(y, p[1, :, i]),
-                               S.dot(y, p[2, :, i]), S.dot(y, p[3, :, i])],
-                              [S.dot(x, q[0, :, i]), S.dot(x, q[1, :, i]),
-                               S.dot(x, q[2, :, i]), S.dot(x, q[3, :, i])]]
+                k[:, :, i], p[:, :, i], q[:, :, i] = find_roots(wl, epsilon[:, :, i], kx, ky)
+                D[:, :, i] = [[S.dot(x, p[0, :, i]), S.dot(x, p[1, :, i]), S.dot(x, p[2, :, i]), S.dot(x, p[3, :, i])],
+                              [S.dot(y, q[0, :, i]), S.dot(y, q[1, :, i]), S.dot(y, q[2, :, i]), S.dot(y, q[3, :, i])],
+                              [S.dot(y, p[0, :, i]), S.dot(y, p[1, :, i]), S.dot(y, p[2, :, i]), S.dot(y, p[3, :, i])],
+                              [S.dot(x, q[0, :, i]), S.dot(x, q[1, :, i]), S.dot(x, q[2, :, i]), S.dot(x, q[3, :, i])]]                
 
             for i in range(1, nlayers - 1):
                 P[:, :, i] = S.diag(S.exp(1j * k[:, 2, i] * d[i]))

@@ -55,7 +55,7 @@ class RefractiveIndex(object):
     e.g. n0_known = {1500e-9:1.445, 1550e-9:1.446, 1600e-9:1.447}
     
     """
-    def __init(self, n0_const = None, n0_poly = None, n0_sell = None, n0_func = None, n0_known = None):
+    def __init__(self, n0_const = None, n0_poly = None, n0_sell = None, n0_func = None, n0_known = None):
 
         if n0_const is not None:
             self.get_RI = partial(self.__from_constant, n0_const)
@@ -93,7 +93,8 @@ class RefractiveIndex(object):
             1.0 +
             B1 * wls**2 / (wls**2 - C1) +
             B2 * wls**2 / (wls**2 - C2) +
-            B3 * wls**2 / (wls**2 - C3)) * numpy.ones_like(wls)
+            B3 * wls**2 / (wls**2 - C3)
+        ) * numpy.ones_like(wls)
 
     @staticmethod
     def __from_function(n0_func, wls):
@@ -109,7 +110,7 @@ class RefractiveIndex(object):
         return self.get_RI(wls)
 
 
-class ThermalOpticCoefficients(object):
+class ThermalOpticCoefficient(object):
     """ Thermal Optic Coefficient """
     def __init__(self, data = None, T0 = 300.0):
         self.__data = data
@@ -126,7 +127,7 @@ class ThermalOpticCoefficients(object):
 
     def dnT(self, T):
         """ Integrate TOC to get RI variation."""
-        return quad(self.TOC, self.T), T)[0]
+        return quad(self.TOC, self.T0, T)[0]
 
     
 class IsotropicMaterial(Material):
@@ -173,7 +174,7 @@ class EpsilonTensor(object):
     def __init__(self, epsilon_tensor_const = eps0 * numpy.eye(3), epsilon_tensor_known = None):
         if epsilon_tensor_known is None:
             epsilon_tensor_known = {}
-            self.epsilon_tensor_const = epslon_tensor_const
+            self.epsilon_tensor_const = epsilon_tensor_const
             self.epsilon_tensor_known = epsilon_tensor_known
 
     def __call__(self, wls):
@@ -227,7 +228,7 @@ SiO2 = IsotropicMaterial(
 # BK7 glass (see http://en.wikipedia.org/wiki/Sellmeier_equation)
 BK7 = IsotropicMaterial(
     name = 'Borosilicate crown glass',
-    n0 = RefractiveIndex(n0_smcoeffs = (
+    n0 = RefractiveIndex(n0_sell = (
         1.03961212, 2.31792344e-1, 1.01046945, 6.00069867e-15, 2.00179144e-14, 1.03560653e-10)))
 
 

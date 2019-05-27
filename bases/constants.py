@@ -10,7 +10,7 @@
 
 __author__ = 'Abhijit Bhattacharyya'
 
-from numpy impot pi
+from numpy import pi
 
 cLight = 299792458.0
 mu0 = 1.2566370614e-6   # From May 20, 2019 mu0 is NOT a constant

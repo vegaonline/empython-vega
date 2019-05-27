@@ -121,7 +121,6 @@ class Multilayer(object):
         """Remove item from a layers list"""
         self.data.remove(item)
 
-
     def pop(self, i = -1):
         return self.data.pop(i)
 
@@ -131,10 +130,10 @@ class Multilayer(object):
 
     def __str__(self):
         """Return a description of the Multilayer"""
-        if self.__len__() == 0.0:
+        if self.__len__() == 0:
             list_str = "<empty>"
         else:
-            list_str = '\n'.join(['%d: %s' % (i1, 1.0__str__()) for il, l in enumerate(self.data)])
+            list_str = '\n'.join(['%d: %s' % (il, l.__str__()) for il, l in enumerate(self.data)])
             return 'Multilayer \n...............\n' + list_str
 
 
@@ -353,7 +352,7 @@ def snell(theta_inc, n):
         theta[i] = numpy.arcsin(n[i - 1] / n[i] * numpy.sin(theta[i - 1]))
     return theta
 
-def group_delay and dispersion(wls, y):
+def group_delay_and_dispersion(wls, y):
     """ Compute group delay and dispersion
     INPUT
     wls = wavlengths(ndarray)
