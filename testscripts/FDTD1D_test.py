@@ -1,6 +1,7 @@
 """ Testing FDTD 1D
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 from builtins import zip
 from builtins import str
@@ -10,7 +11,7 @@ from builtins import object
 import scipy
 import matplotlib
 import bases
-from solvers.FDTD import *
+from solvers.FDTD.FDTD1D import FDTD1D
 
 __author__ = 'Abhijit Bhattacharyya'
 
@@ -24,4 +25,5 @@ pulseSpread = 12.0
 numSteps = 1
 plotOK = 1
 
-FDTDobj = solvers.FDTD.FDTD1D.FDTD1D(ngridx, centrePulseInc, pulseSpread, centreProbSpace, numSteps, plotOK)
+FDTD1DObj = FDTD1D('FDTD1D', ex, hy, ngridx, centrePulseInc, pulseSpread, centreProbSpace, numSteps, plotOK)
+FDTD1Dobj.computeFDTD1D()

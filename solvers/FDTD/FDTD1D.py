@@ -22,8 +22,10 @@ class FDTD1D(object):
     normal and 
     lossy dielectric medium
     """
-    def __init__(self, name='FDTD1D', ngridx = 200, centrePulseInc = 40.0, pulseSpread = 12.0, centreProbSpace = 100, numSteps = 1, plotOK = 1):
-        object.__init(self, name)
+    def __init__(self, name='FDTD1D',  ex = S.zeros(200, dtype = float), hy = S.zeros(200, dtype = float), ngridx = 200, centrePulseInc = 40.0, pulseSpread = 12.0, centreProbSpace = 100, numSteps = 1, plotOK = 1):
+
+        object.ex = ex
+        object.hy = hy
         object.ngridx = ngridx
         object.centreProbSpace = 0.5 * ngridx
         object.centrePulseInc = centrePulseInc
@@ -31,7 +33,8 @@ class FDTD1D(object):
         object.numSteps = numSteps
         object.plotOK = plotOK
 
-    def computeFDTD1D(self, ex, hy, plotOK):
+    # def computeFDTD1D(self, ex, hy, plotOK):
+    def computeFDTD1D(self):
         """ FDTD1D solver
         INPUT :
         ngridx          = number cells along x direction as Electric field propagates along X
@@ -43,8 +46,18 @@ class FDTD1D(object):
         OUTPUT :
         
         """
-        self.ex = S.asarray(ex)
-        self.hy = S.asarray(hy)
+        # self.ex = S.asarray(ex)
+        # self.hy = S.asarray(hy)
+        
+        ex              = self.ex
+        hy              = self.hy
+        numSteps        = self.numSteps
+        ngridx          = self.ngridx
+        centrePulseInc  = self.centrePulseInc
+        pulseSpread     = self.pulseSpread
+        centreProbSpace = self.centreProbSpace
+        plotOK          = self.plotOK
+        
 
         tCount = 0         # keeps track of total number
 
@@ -64,7 +77,8 @@ class FDTD1D(object):
 
                 # END of MAIN FDTD 1D Loop
 
-                plot(ex, hy, ngridx) if plotOK == 1
+                if plotOK == 1:
+                    plot(ex, hy, ngridx) 
                 
 
     def plot(self, ex, hy, ngridx):
