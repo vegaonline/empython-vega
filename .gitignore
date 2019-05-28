@@ -1,0 +1,5 @@
+bases/*.pyc
+solvers/*.pyc
+solvers/FDTD/*.pyc
+solvers/modesolvers/*.pyc
+
