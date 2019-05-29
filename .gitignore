@@ -2,4 +2,6 @@ bases/*.pyc
 solvers/*.pyc
 solvers/FDTD/*.pyc
 solvers/modesolvers/*.pyc
-
+bases/__pycache__/
+solvers/__pycache__/
+solvers/FDTD/__pycache__/
