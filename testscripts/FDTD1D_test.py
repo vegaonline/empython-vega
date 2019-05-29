@@ -19,11 +19,12 @@ ngridx = 400
 ex = scipy.zeros(ngridx, dtype = float)
 hy = scipy.zeros(ngridx, dtype = float)
 
-centreProbSpace = 0.5 * ngridx
+centreProbSpace = ngridx / 2
 centrePulseInc = 40.0
-pulseSpread = 12.0
+pulseSpread = 12
 numSteps = 1
 plotOK = 1
 
 FDTD1DObj = FDTD1D('FDTD1D', ex, hy, ngridx, centrePulseInc, pulseSpread, centreProbSpace, numSteps, plotOK)
-FDTD1Dobj.computeFDTD1D()
+FDTD1DSolution = FDTD1DObj.computeFDTD1D()
+FDTD1DObj.plot()
