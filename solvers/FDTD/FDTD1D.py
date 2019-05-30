@@ -34,7 +34,7 @@ class FDTD1D(object):
         self.ngridx = ngridx
         self.distTravel = distTravel
         self.signalFreq = signalFreq * 1.0e6  # converted to Hertz
-        self.centreProbSpace = centreProbSpace
+        self.centreProbSpace = int(centreProbSpace)
         self.centrePulseInc = centrePulseInc
         self.pulseSpread = pulseSpread
         self.numSteps = numSteps
@@ -81,8 +81,11 @@ class FDTD1D(object):
         delT = delX / (2.0 * cLight)
         ca = S.zeros(ngridx, dtype = float)
         cb = S.zeros(ngridx, dtype = float)
-        lossStart = 100.0
+        lossStart = 100
 
+        print('centreProbSpace: ', centreProbSpace)
+
+        
         if isABC == 1:
             ex_low_m1 = 0.0
             ex_low_m2 = 0.0
@@ -96,9 +99,7 @@ class FDTD1D(object):
             eaf = delT * sigmaMedium / (2.0 * eps0 * epsRmedium)
             for k in range(lossStart, ngridx):
                 ca[k] = (1.0 - eaf) / (1.0 + eaf)
-                cb[k] = 0.5 / (epsRmedium * (1.0 + eaf))
-                
-            
+                cb[k] = 0.5 / (epsRmedium * (1.0 + eaf))                            
         
         if (numSteps > 0):
             for nIter in range(0, numSteps):
@@ -126,7 +127,6 @@ class FDTD1D(object):
                     ex_hi_m2 = ex_hi_m1
                     ex_hi_m1 = ex[ngridx - 2]
                 
-
                 for k in range(0, ngridx - 2):
                     hy[k] += 0.5 * (ex[k] - ex[k + 1])
 
@@ -157,19 +157,19 @@ class FDTD1D(object):
         ax1.set_xlabel('FDTD Cells', fontsize = 12)
         ax1.plot(x, ex, 'tab:blue', label = 'Ex')
         ax1.set_xlim([0, ngridx])
-        ax1.legend(loc = 'upper center', bbox_to_anchor=(0.5, 0.1),  shadow=True, ncol=2)
-
+        ax1.legend(loc = 'best',  shadow=True, ncol=2)
+        #  ax1.legend(loc = 'upper center', bbox_to_anchor=(0.5, 0.1),  shadow=True, ncol=2)
 
         ax2 = fig.add_subplot(122)
         ax2.set_xlabel('FDTD Cells', fontsize = 12)        
         ax2.plot(x, hy, 'tab:red', label = 'Hy')
         ax2.set_xlim([0, ngridx])
-        ax2.legend(loc = 'upper center', bbox_to_anchor=(0.5, 0.1),  shadow=True, ncol=2)
-
+        ax2.legend(loc = 'best',  shadow=True, ncol=2)
+        # ax2.legend(loc = 'upper center', bbox_to_anchor=(0.5, 0.1),  shadow=True, ncol=2)
 
         plt.suptitle(title1, fontsize = 20)
         plt.savefig('Figure.png')
-        #plt.show()
+        plt.show()
 
         
         
