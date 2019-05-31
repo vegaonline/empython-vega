@@ -27,7 +27,7 @@ class FDTD1D(object):
     normal and 
     lossy dielectric medium
     """
-    def __init__(self, name='FDTD1D',  ex = S.zeros(100, dtype = float), hy = S.zeros(100, dtype = float), ngridx = 100, distTravel = 100.0, signalFreq = 50.0, centrePulseInc = 10.0, pulseSpread = 5.0, centreProbSpace = 50, numSteps = 1, epsRmedium = 1.0, sigmaMedium = 1.0, plotOK = 1, animOK = 1, isABC = 1, isLossy = 0):
+    def __init__(self, name='FDTD1D',  ex = S.zeros(100, dtype = float), hy = S.zeros(100, dtype = float), ngridx = 100, distTravel = 100.0, signalFreq = 50.0, centrePulseInc = 10.0, pulseSpread = 5.0, centreProbSpace = 50, numSteps = 1, epsRmedium = 1.0, sigmaMedium = 1.0, plotOK = 1, animOK = 1, isABC = 1, isLossy = 1):
 
         self.ex = ex
         self.hy = hy
@@ -83,7 +83,7 @@ class FDTD1D(object):
         delT = delX / (2.0 * cLight)
         ca = S.zeros(ngridx, dtype = float)
         cb = S.zeros(ngridx, dtype = float)
-        lossStart = 100
+        lossStart = int(ngridx / 2)
 
         # print('centreProbSpace: ', centreProbSpace)
 
@@ -116,15 +116,12 @@ class FDTD1D(object):
         if (numSteps > 0):
             for nIter in range(0, numSteps):
                 tCount += 1
-
                 # MAIN FDTD 1D Loop
                 for k in range(1, ngridx - 1):
                     if isLossy == 0:
-                        ex[k] += 0.5 * (hy[k - 1] - hy[k])    # this is for non lossy medium
+                        ex[k] += 0.5 * (hy[k - 1] - hy[k])                           # this is for non lossy medium
                     else:
-                        ex[k] = ca[k] * ex[k] + cb[k] *  (hy[k - 1] - hy[k])    # this is for lossy medium
-                        
-                    # print('k = ', k, 'Ex: ', ex[k], '  Hy: ', hy[k])
+                        ex[k] = ca[k] * ex[k] + cb[k] *  (hy[k - 1] - hy[k])         # this is for lossy medium
 
                 pulse = S.exp(-0.5 * ((centrePulseInc - tCount) / pulseSpread)**2)   # for Gaussian
                 ex[centreProbSpace] = pulse
@@ -133,7 +130,6 @@ class FDTD1D(object):
                     ex[0] = ex_low_m2
                     ex_low_m2 = ex_low_m1
                     ex_low_m1 = ex[1]
-
                     ex[ngridx - 1] = ex_hi_m2
                     ex_hi_m2 = ex_hi_m1
                     ex_hi_m1 = ex[ngridx - 2]
