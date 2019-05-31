@@ -26,11 +26,12 @@ sigmaMedium = 0.04    # S/m
 centrePulseInc = 40.0    #  5.0
 pulseSpread = 12         # 30
 centreProbSpace = ngridx / 2    # pulseSpread/2   # ngridx / 2
-numSteps = 10
-plotOK = 1   # will it plot, yes by default
-isABC = 1    # Add absorbing boundary conditions
-isLossy = 1  # is the medium of propagation a lossy dielectric mediium?
+numSteps = 300
+plotOK = 0   # will it plot, yes by default
+animOK = 1   # will it animate on screen ?
+isABC = 0    # Add absorbing boundary conditions
+isLossy = 0  # is the medium of propagation a lossy dielectric mediium?
 
-FDTD1DObj = FDTD1D('FDTD1D', ex, hy, ngridx, distTravel, signalFreq, centrePulseInc, pulseSpread, centreProbSpace, numSteps, epsRMedium, sigmaMedium, plotOK, isABC, isLossy)
+FDTD1DObj = FDTD1D('FDTD1D', ex, hy, ngridx, distTravel, signalFreq, centrePulseInc, pulseSpread, centreProbSpace, numSteps, epsRMedium, sigmaMedium, plotOK, animOK, isABC, isLossy)
 FDTD1DSolution = FDTD1DObj.computeFDTD1D()
-FDTD1DObj.plot()
+# FDTD1DObj.plot()

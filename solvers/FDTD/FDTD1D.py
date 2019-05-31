@@ -27,7 +27,7 @@ class FDTD1D(object):
     normal and 
     lossy dielectric medium
     """
-    def __init__(self, name='FDTD1D',  ex = S.zeros(100, dtype = float), hy = S.zeros(100, dtype = float), ngridx = 100, distTravel = 100.0, signalFreq = 50.0, centrePulseInc = 10.0, pulseSpread = 5.0, centreProbSpace = 50, numSteps = 1, epsRmedium = 1.0, sigmaMedium = 1.0, plotOK = 1, isABC = 1, isLossy = 0):
+    def __init__(self, name='FDTD1D',  ex = S.zeros(100, dtype = float), hy = S.zeros(100, dtype = float), ngridx = 100, distTravel = 100.0, signalFreq = 50.0, centrePulseInc = 10.0, pulseSpread = 5.0, centreProbSpace = 50, numSteps = 1, epsRmedium = 1.0, sigmaMedium = 1.0, plotOK = 1, animOK = 1, isABC = 1, isLossy = 0):
 
         self.ex = ex
         self.hy = hy
@@ -40,7 +40,8 @@ class FDTD1D(object):
         self.numSteps = numSteps
         self.epsRmedium = epsRmedium
         self.sigmaMedium = sigmaMedium
-        self.plotOK = plotOK
+        self.plotOK = plotOK     # is OK to plot ?
+        self.animOK = animOK     # is OK to animate ?
         self.isABC = isABC       # is absorbing boundary condition to avoid reflection from boundary?
         self.isLossy = isLossy   # is the dielectric medium a lossy medium?
         
@@ -72,6 +73,7 @@ class FDTD1D(object):
         epsRmedium      = self.epsRmedium
         sigmaMedium     = self.sigmaMedium
         plotOK          = self.plotOK
+        animOK          = self.animOK
         isABC           = self.isABC
         isLossy         = self.isLossy
         
@@ -83,9 +85,19 @@ class FDTD1D(object):
         cb = S.zeros(ngridx, dtype = float)
         lossStart = 100
 
-        print('centreProbSpace: ', centreProbSpace)
+        # print('centreProbSpace: ', centreProbSpace)
 
-        
+        if animOK == 1:
+            xx = np.linspace(0, ngridx, ngridx)            
+            plt.ion()
+            ax = plt.gca()
+            ax.set_xlabel('FDTD Cells', fontsize = 12)            
+            ax.set_autoscale_on(True)
+            line1, = ax.plot(xx, ex)
+            line1.set_label('EX ')
+            line2, = ax.plot(xx, hy)
+            line2.set_label('HY ')            
+       
         if isABC == 1:
             ex_low_m1 = 0.0
             ex_low_m2 = 0.0
@@ -107,7 +119,6 @@ class FDTD1D(object):
 
                 # MAIN FDTD 1D Loop
                 for k in range(1, ngridx - 1):
-
                     if isLossy == 0:
                         ex[k] += 0.5 * (hy[k - 1] - hy[k])    # this is for non lossy medium
                     else:
@@ -131,7 +142,22 @@ class FDTD1D(object):
                     hy[k] += 0.5 * (ex[k] - ex[k + 1])
 
                 # END of MAIN FDTD 1D Loop
-
+                if animOK == 1:
+                    title1 = 'EX and Hy field in FDTD 1D simulation.'
+                    plot_label1 = 'EX (Normalized) \n' + 'Time step: ' + str(nIter)
+                    plot_label2 = 'HY \n' + 'Time step: ' + str(nIter)
+                    line1.set_ydata(ex)                    
+                    line1.set_label(plot_label1)
+                    line2.set_ydata(hy)                    
+                    line2.set_label(plot_label2)
+                    ax.legend(loc = 'best')
+                    ax.relim()
+                    ax.autoscale_view(True, True, True)
+                    plt.draw()
+                    plt.pause(0.3)
+        if plotOK == 1:
+            self.plot()
+            
         return self
             
 
@@ -155,7 +181,7 @@ class FDTD1D(object):
 
         ax1 = fig.add_subplot(121)
         ax1.set_xlabel('FDTD Cells', fontsize = 12)
-        ax1.plot(x, ex, 'tab:blue', label = 'Ex')
+        ax1.plot(x, ex, 'tab:blue', label = 'Ex (Normalized)')
         ax1.set_xlim([0, ngridx])
         ax1.legend(loc = 'best',  shadow=True, ncol=2)
         #  ax1.legend(loc = 'upper center', bbox_to_anchor=(0.5, 0.1),  shadow=True, ncol=2)
@@ -170,6 +196,9 @@ class FDTD1D(object):
         plt.suptitle(title1, fontsize = 20)
         plt.savefig('Figure.png')
         plt.show()
+        
+        
+
 
         
         
