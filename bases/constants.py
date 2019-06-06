@@ -18,3 +18,4 @@ eps0 = 1.0 / (cLight * cLight * mu0)
 hPlank = 6.62606896e-34
 hBar = hPlank / (2.0 * pi)
 kB = 1.38065040e-23
+smallNumber = 1.0e-6
