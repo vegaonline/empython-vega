@@ -2,12 +2,10 @@
 """
 from __future__ import print_function
 from __future__ import absolute_import
-
 from builtins import zip
 from builtins import str
 from builtins import range
 from builtins import object
-
 import scipy as S
 import matplotlib
 from bases.constants import cLight, mu0, eps0, smallNumber
@@ -21,28 +19,30 @@ Let us consider a+y directed plane wave is moving along dielectric sphere of rad
 epsa_r_l   = 1.0                         # epsilon_r for lab 
 epsa_r_d   = 4.0                         # epsilon_r for dielectric
 mu_d       = mu0                         # permeability for dielectric
-sigma_l    = smallNumber                 # Though it must be zero for vac, a small number is used to avoid spurious reflection
+sigma_l    = smallNumber                 # For vac = 0 = small number to avoid spurious reflection
 sigma_d    = 0.0                         # for dielectric
 ud         = cLight / S.sqrt(epsa_r_d)   # group velocity in dielectric
 signalFreq = 2500.0                      # in MHZ
-signalFreq *= 1e6                        # in Hz
+signalFreq *= 1.0e6                        # in Hz
 signalPeriod= 1.0 / signalFreq           # period = 1/T
 lambdad    = ud / signalFreq
 delta      = lambdad / 20.0              # delta = Del_X = Del_Y = Del_Z
 dT         = delta / (2.0 * cLight)      #
-radiusd    = 4.5 / 100.0                 # radius = 4.5 cm which is expressed in m
+radiusd    = 4.5 / 100.0                 # radius = 4.5 cm expressed in m
 gridSize   = int((radiusd / delta) + 0.5)
 ngridx = ngridy = ngridz = 3 * gridSize
-
-matType    = 2                           # 2 Types of material: vacuum and dielectric
+origXd     = 0                           # X coord of centre of dielectric
+origYd     = 0                           # Y coord of centre of dielectric
+origZd     = 0                           # Z coord of centre of dielectric
+matType    = 2                           # materials: vacuum and dielectric
 
 # Create required arrays
-ex = S.zeros(ngridx, dtype = float)
-ey = S.zeros(ngridy, dtype = float)
-ez = S.zeros(ngridz, dtype = float)
-hx = S.zeros(ngridx, dtype = float)
-hy = S.zeros(ngridy, dtype = float)
-hz = S.zeros(ngridz, dtype = float)
+ex = S.zeros((ngridx, ngridy, ngridz), dtype = float)
+ey = S.zeros((ngridx, ngridy, ngridz), dtype = float)
+ez = S.zeros((ngridx, ngridy, ngridz), dtype = float)
+hx = S.zeros((ngridx, ngridy, ngridz), dtype = float)
+hy = S.zeros((ngridx, ngridy, ngridz), dtype = float)
+hz = S.zeros((ngridx, ngridy, ngridz), dtype = float)
 epsr = S.zeros(matType, dtype = float)
 sigr = S.zeros(matType, dtype = float)
 
@@ -54,11 +54,9 @@ sigr[1] = sigma_d
 waveNumber    = 6
 TotalTimeStep = waveNumber * signalPeriod
 
-
 centrePulseInc = 40.0    #  5.0
 pulseSpread = 30 # 12         # 30
 centreProbSpace = pulseSpread / 2 + 2    # pulseSpread/2   # ngridx / 2
-
 
 plotOK = 0   # will it plot, yes by default
 animOK = 1   # will it animate on screen ?
@@ -66,7 +64,6 @@ isABC = 1    # Add absorbing boundary conditions
 isLossy = 1  # is the medium of propagation a lossy dielectric mediium?
 
 FDTD3DObj = FDTD3D(
-    'FDTD3D', ex, ey, ez, hx, hy, hz, epsr, sigr, matType, delta, dT, radiusd, TotalTimeStep, ngridx, ngridy, ngridz, signalFreq,
-    centrePulseInc, pulseSpread, centreProbSpace, plotOK, animOK, isABC, isLossy)
+    ex, ey, ez, hx, hy, hz, epsr, sigr, matType, delta, dT, radiusd, gridSize, TotalTimeStep, 'FDTD3D', ngridx, ngridy, ngridz, origXd, origYd, origZd, signalFreq, centrePulseInc, pulseSpread, centreProbSpace, plotOK, animOK, isABC, isLossy)
 FDTD3DSolution = FDTD3DObj.computeFDTD3D()
 # FDTD3DObj.plot()

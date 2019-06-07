@@ -28,13 +28,15 @@ class FDTD3D(object):
     lossy dielectric medium
     """
     def __init__(self,
-                 name='FDTD3D',
-                 ex = S.zeros(100, dtype = float), ey = S.zeros(100, dtype = float), ez = S.zeros(100, dtype = float),
-                 hx = S.zeros(100, dtype = float), hy = S.zeros(100, dtype = float), hz = S.zeros(100, dtype = float),
-                 epsr = S.zeros(2, dtype = float), sigr = S.zeros(2, dtype = float),
-                 matType, delta, dT, radiusd, TotalTimeStep,
+                 ex, ey, ez, hx, hy, hz,
+                 epsr, sigr,
+                 matType, delta, dT, radiusd, gridSize, TotalTimeStep,
+                 name='FDTD3D',                
                  ngridx = 100, ngridy = 100, ngridz = 100,
-                 signalFreq = 50.0, centrePulseInc = 10.0, pulseSpread = 5.0, centreProbSpace = 50, plotOK = 1, animOK = 1, isABC = 1, isLossy = 1):
+                 origXd= 0, origYd = 0, origZd = 0,
+                 signalFreq = 50.0,
+                 centrePulseInc = 10.0, pulseSpread = 5.0, centreProbSpace = 50,
+                 plotOK = 1, animOK = 1, isABC = 1, isLossy = 1):
 
         self.ex = ex
         self.ey= ey
@@ -48,10 +50,14 @@ class FDTD3D(object):
         self.delta = delta
         self.dT = dT
         self.radiusd = radiusd
+        self.gridSize = gridSize
         self.TotalTimeStep = TotalTimeStep
         self.ngridx = ngridx
         self.ngridy = ngridy
         self.ngridz = ngridz
+        self.origXd = origXd
+        self.origYd = origYd
+        self.origZd = origZd
         self.signalFreq = signalFreq          # already converted to Hz
         self.centreProbSpace = int(centreProbSpace)
         self.centrePulseInc = centrePulseInc
@@ -73,10 +79,7 @@ class FDTD3D(object):
         plotOK          = 0 : not to plot || 1 : plot
         OUTPUT :
         
-        """
-        # self.ex = S.asarray(ex)
-        # self.hy = S.asarray(hy)
-        
+        """        
         ex              = self.ex
         ey              = self.ey
         ez              = self.ez
@@ -89,10 +92,14 @@ class FDTD3D(object):
         delta           = self.delta
         dT              = self.dT
         radiusd         = self.radiusd
-        TotalTimeSteps  = self.TotalTimeSteps
+        gridSize        = self.gridSize
+        TotalTimeStep   = self.TotalTimeStep
         ngridx          = self.ngridx
         ngridy          = self.ngridy
         ngridz          = self.ngridz
+        origXd          = self.origXd
+        origYd          = self.origYd
+        origZd          = self.origZd
         signalFreq      = self.signalFreq
         centrePulseInc  = int(self.centrePulseInc)
         pulseSpread     = self.pulseSpread
@@ -105,9 +112,25 @@ class FDTD3D(object):
         tCount = 0         # keeps track of total number
 
         lambda0 = cLight / signalFreq
-        R = dT / (eps0 * 
+        RA = ((cLight * dT) / delta) ** 2
+        RB = dT / (mu0 * delta)
         ca = S.zeros(ngridx, dtype = float)
         cb = S.zeros(ngridx, dtype = float)
+
+        # Create media array for each grid point
+        # so that sigma and mu_r could be determined for a particular (x, y, z)
+        xv = S.arange(0, ngridx+1)
+        yv = S.arange(0, ngridy+1)
+        zv = S.arange(0, ngridz+1)
+        iMedia = lambda x, y, z: (S.sqrt((x - origXd + 0.5)**2 + (y - origYd + 0.5)**2 + (z - origZd + 0.5)**2) >= gridSize) * 1   # declaring media function
+        
+
+        print('origX: ', origXd, ' origY: ', origYd, ' origZ: ', origZd, ' gridSize: ', gridSize)
+
+        exit()
+
+
+
         lossStart = int(ngridx / 2)
 
         # print('centreProbSpace: ', centreProbSpace)
