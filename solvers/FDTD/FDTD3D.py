@@ -119,18 +119,12 @@ class FDTD3D(object):
 
         # Create media array for each grid point
         # so that sigma and mu_r could be determined for a particular (x, y, z)
-        xv = S.arange(0, ngridx+1)
-        yv = S.arange(0, ngridy+1)
-        zv = S.arange(0, ngridz+1)
+        xv = S.arange(0, ngridx + 1)
+        yv = S.arange(0, ngridy + 1)
+        zv = S.arange(0, ngridz + 1)
+
         iMedia = lambda x, y, z: (S.sqrt((x - origXd + 0.5)**2 + (y - origYd + 0.5)**2 + (z - origZd + 0.5)**2) >= gridSize) * 1   # declaring media function
         
-
-        print('origX: ', origXd, ' origY: ', origYd, ' origZ: ', origZd, ' gridSize: ', gridSize)
-
-        exit()
-
-
-
         lossStart = int(ngridx / 2)
 
         # print('centreProbSpace: ', centreProbSpace)
@@ -153,18 +147,36 @@ class FDTD3D(object):
             ex_hi_m2 = 0.0
 
         if isLossy == 1:
-            for k in range(1, ngridx):
-                ca[k] = 1.0
-                cb[k] = 0.5
-            eaf = delT * sigmaMedium / (2.0 * eps0 * epsRmedium)
-            for k in range(lossStart, ngridx):
-                ca[k] = (1.0 - eaf) / (1.0 + eaf)
-                cb[k] = 0.5 / (epsRmedium * (1.0 + eaf))                            
+
+        ncur = 3 # index for time current time t
+        npr1 = 2 # index for time (t - 1)
+        npr2 = 1 # index for time (t - 2)
         
-        if (numSteps > 0):
-            for nIter in range(0, numSteps):
-                tCount += 1
-                # MAIN FDTD 1D Loop
+        if (TotalTimeStep > 0):
+            
+            tCount += 1
+            npr2 = npr1
+            npr1 = ncur
+            ncur = (ncur % 3) + 1
+            
+            # MAIN FDTD 3D Loop
+
+            for k in range ( 1, ngridz ):            # Z
+                for j in range ( 1, ngridy ):        # Y
+                    for i in range (1, ngridx ):     # X
+                        
+                        # this is for absorbing layer simulation
+
+                        hx[i + 1, j + 1, k + 1, ncur] = hx[i + 1, j + 1, k + 1, npr1]
+                                                        + RB * ( ey[i +1, j + 1, k + 1 + 1, npr1] - ey[i + 1, j + 1, k + 1, npr1]
+                                                               + ez[i + 1, j + 1, k + 1, npr1]    - ez[i + 1, j + 1 + 1, k + 1, npr1] )
+                        hy[i + 1, j + 1, k + 1, ncur] = hy[i + 1, j + 1, k + 1, npr1]
+                                                        + RB * ( ez[i + 1 + 1, j , k, npr1] - 
+            
+
+
+
+            
                 for k in range(1, ngridx - 1):
                     if isLossy == 0:
                         ex[k] += 0.5 * (hy[k - 1] - hy[k])                           # this is for non lossy medium

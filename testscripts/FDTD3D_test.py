@@ -35,14 +35,16 @@ origXd     = 0                           # X coord of centre of dielectric
 origYd     = 0                           # Y coord of centre of dielectric
 origZd     = 0                           # Z coord of centre of dielectric
 matType    = 2                           # materials: vacuum and dielectric
+waveNumber    = 6
+TotalTimeStep = waveNumber * signalPeriod
 
 # Create required arrays
-ex = S.zeros((ngridx, ngridy, ngridz), dtype = float)
-ey = S.zeros((ngridx, ngridy, ngridz), dtype = float)
-ez = S.zeros((ngridx, ngridy, ngridz), dtype = float)
-hx = S.zeros((ngridx, ngridy, ngridz), dtype = float)
-hy = S.zeros((ngridx, ngridy, ngridz), dtype = float)
-hz = S.zeros((ngridx, ngridy, ngridz), dtype = float)
+ex = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = float)
+ey = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = float)
+ez = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = float)
+hx = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = float)
+hy = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = float)
+hz = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = float)
 epsr = S.zeros(matType, dtype = float)
 sigr = S.zeros(matType, dtype = float)
 
@@ -50,9 +52,6 @@ epsr[0] = epsa_r_l
 epsr[1] = epsa_r_d
 sigr[0] = sigma_l
 sigr[1] = sigma_d
-
-waveNumber    = 6
-TotalTimeStep = waveNumber * signalPeriod
 
 centrePulseInc = 40.0    #  5.0
 pulseSpread = 30 # 12         # 30
