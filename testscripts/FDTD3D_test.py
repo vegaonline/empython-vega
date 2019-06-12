@@ -36,7 +36,7 @@ origYd     = 0                           # Y coord of centre of dielectric
 origZd     = 0                           # Z coord of centre of dielectric
 matType    = 2                           # materials: vacuum and dielectric
 waveNumber    = 6
-TotalTimeStep = waveNumber * signalPeriod
+TotalTimeStep = int(waveNumber * signalPeriod)
 
 # Create required arrays
 ex = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = float)
@@ -47,22 +47,14 @@ hy = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = fl
 hz = S.zeros((ngridx + 2, ngridy + 2, ngridz + 2, TotalTimeStep + 1), dtype = float)
 epsr = S.zeros(matType, dtype = float)
 sigr = S.zeros(matType, dtype = float)
-
 epsr[0] = epsa_r_l
 epsr[1] = epsa_r_d
 sigr[0] = sigma_l
 sigr[1] = sigma_d
 
-centrePulseInc = 40.0    #  5.0
-pulseSpread = 30 # 12         # 30
-centreProbSpace = pulseSpread / 2 + 2    # pulseSpread/2   # ngridx / 2
-
 plotOK = 0   # will it plot, yes by default
 animOK = 1   # will it animate on screen ?
-isABC = 1    # Add absorbing boundary conditions
-isLossy = 1  # is the medium of propagation a lossy dielectric mediium?
 
-FDTD3DObj = FDTD3D(
-    ex, ey, ez, hx, hy, hz, epsr, sigr, matType, delta, dT, radiusd, gridSize, TotalTimeStep, 'FDTD3D', ngridx, ngridy, ngridz, origXd, origYd, origZd, signalFreq, centrePulseInc, pulseSpread, centreProbSpace, plotOK, animOK, isABC, isLossy)
+FDTD3DObj = FDTD3D(ex, ey, ez, hx, hy, hz, epsr, sigr, matType, delta, dT, radiusd, gridSize, TotalTimeStep, 'FDTD3D', ngridx, ngridy, ngridz, origXd, origYd, origZd, signalFreq, plotOK, animOK)
 FDTD3DSolution = FDTD3DObj.computeFDTD3D()
 # FDTD3DObj.plot()

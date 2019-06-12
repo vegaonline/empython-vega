@@ -31,12 +31,7 @@ class FDTD3D(object):
                  ex, ey, ez, hx, hy, hz,
                  epsr, sigr,
                  matType, delta, dT, radiusd, gridSize, TotalTimeStep,
-                 name='FDTD3D',                
-                 ngridx = 100, ngridy = 100, ngridz = 100,
-                 origXd= 0, origYd = 0, origZd = 0,
-                 signalFreq = 50.0,
-                 centrePulseInc = 10.0, pulseSpread = 5.0, centreProbSpace = 50,
-                 plotOK = 1, animOK = 1, isABC = 1, isLossy = 1):
+                 name='FDTD3D', ngridx = 100, ngridy = 100, ngridz = 100, origXd= 0, origYd = 0, origZd = 0, signalFreq = 50.0, plotOK = 1, animOK = 1):
 
         self.ex = ex
         self.ey= ey
@@ -59,24 +54,13 @@ class FDTD3D(object):
         self.origYd = origYd
         self.origZd = origZd
         self.signalFreq = signalFreq          # already converted to Hz
-        self.centreProbSpace = int(centreProbSpace)
-        self.centrePulseInc = centrePulseInc
-        self.pulseSpread = pulseSpread
         self.plotOK = plotOK     # is OK to plot ?
         self.animOK = animOK     # is OK to animate ?
-        self.isABC = isABC       # is absorbing boundary condition to avoid reflection from boundary?
-        self.isLossy = isLossy   # is the dielectric medium a lossy medium?
-        
 
     def computeFDTD3D(self):
         """ FDTD3D solver
         INPUT :
-        ngridx          = number cells along x direction as Electric field propagates along X
-        centrePulseInc  = Centre of the incident pulse
-        pulseSpread     = Width of the incident pulse
-        centreProbSpace = Centre of the problem space
-        numSteps        = total number of times the main loop to be executed
-        plotOK          = 0 : not to plot || 1 : plot
+
         OUTPUT :
         
         """        
@@ -101,34 +85,26 @@ class FDTD3D(object):
         origYd          = self.origYd
         origZd          = self.origZd
         signalFreq      = self.signalFreq
-        centrePulseInc  = int(self.centrePulseInc)
-        pulseSpread     = self.pulseSpread
-        centreProbSpace = self.centreProbSpace
         plotOK          = self.plotOK
         animOK          = self.animOK
-        isABC           = self.isABC
-        isLossy         = self.isLossy
         
         tCount = 0         # keeps track of total number
 
         lambda0 = cLight / signalFreq
         RA = ((cLight * dT) / delta) ** 2
         RB = dT / (mu0 * delta)
-        ca = S.zeros(ngridx, dtype = float)
-        cb = S.zeros(ngridx, dtype = float)
+        iMedia = lambda x, y, z: (S.sqrt((x - origXd + 0.5) ** 2 + (y - origYd + 0.5) ** 2 + (z - origZd + 0.5)**2) >= gridSize) * 1   # declaring media function
+        R      = lambda l : dT / epsr[l]
+        CA     = lambda l : 1.0 - ((R[l] * sigr[l]) / epsr[l])
+        CB     = lambda l : RA / epsr[l]
 
         # Create media array for each grid point
         # so that sigma and mu_r could be determined for a particular (x, y, z)
         xv = S.arange(0, ngridx + 1)
         yv = S.arange(0, ngridy + 1)
         zv = S.arange(0, ngridz + 1)
-
-        iMedia = lambda x, y, z: (S.sqrt((x - origXd + 0.5)**2 + (y - origYd + 0.5)**2 + (z - origZd + 0.5)**2) >= gridSize) * 1   # declaring media function
         
-        lossStart = int(ngridx / 2)
-
-        # print('centreProbSpace: ', centreProbSpace)
-
+        """
         if animOK == 1:
             xx = np.linspace(0, ngridx, ngridx)            
             plt.ion()
@@ -139,27 +115,20 @@ class FDTD3D(object):
             line1.set_label('EX ')
             line2, = ax.plot(xx, hy)
             line2.set_label('HY ')            
-       
-        if isABC == 1:
-            ex_low_m1 = 0.0
-            ex_low_m2 = 0.0
-            ex_hi_m1 = 0.0
-            ex_hi_m2 = 0.0
-
-        if isLossy == 1:
+        """
 
         ncur = 3 # index for time current time t
         npr1 = 2 # index for time (t - 1)
         npr2 = 1 # index for time (t - 2)
         
-        if (TotalTimeStep > 0):
-            
+        if (TotalTimeStep > 0):            
             tCount += 1
             npr2 = npr1
             npr1 = ncur
             ncur = (ncur % 3) + 1
             
             # MAIN FDTD 3D Loop
+            
 
             for k in range ( 1, ngridz ):            # Z
                 for j in range ( 1, ngridy ):        # Y
@@ -167,52 +136,35 @@ class FDTD3D(object):
                         
                         # this is for absorbing layer simulation
 
-                        hx[i + 1, j + 1, k + 1, ncur] = hx[i + 1, j + 1, k + 1, npr1]
-                                                        + RB * ( ey[i +1, j + 1, k + 1 + 1, npr1] - ey[i + 1, j + 1, k + 1, npr1]
-                                                               + ez[i + 1, j + 1, k + 1, npr1]    - ez[i + 1, j + 1 + 1, k + 1, npr1] )
-                        hy[i + 1, j + 1, k + 1, ncur] = hy[i + 1, j + 1, k + 1, npr1]
-                                                        + RB * ( ez[i + 1 + 1, j , k, npr1] - 
-            
+                        hx[i + 1, j + 1, k + 1, ncur] = hx[i + 1, j + 1, k + 1, npr1] + RB * (ey[i + 1, j + 1, k + 1 + 1, npr1] - ey[i + 1, j + 1, k + 1, npr1] + ez[i + 1, j + 1, k + 1, npr1] - ez[i + 1, j + 1 + 1, k + 1, npr1])
+                        hy[i + 1, j + 1, k + 1, ncur] = hy[i + 1, j + 1, k + 1, npr1] + RB * (ez[i + 1 + 1, j , k, npr1]        - ez[i + 1, j + 1, k + 1, npr1] + ex[i + 1, j + 1, k + 1, npr1] - ex[i + 1, j + 1, k + 1 + 1, npr1])
+                        hz[i + 1, j + 1, k + 1, ncur] = hz[i + 1, j + 1, k + 1, npr1] + RB * (ex[i + 1, j + 1 + 1, k + 1, npr1] - ex[i + 1, j + 1, k + 1, npr1] + ey[i + 1, j + 1, k + 1, npr1] - ey[i + 1 + 1, j + 1, k + 1, npr1])
+                        media = iMedia(i + 1, j + 1, k + 1)
 
+                        ex[i + 1, j + 1, k + 1, ncur] = CA[media] * ex[i + 1, j + 1, k + 1, npr1] + CB[media] * (hz[i + 1, j + 1, k + 1, ncur] - hz[i + 1, j + 1 - 1, k + 1, ncur] + hy[i + 1, j + 1, k + 1 - 1, ncur]     - hy[ i + 1, j + 1, k + 1, ncur])
+                        ey[i + 1, j + 1, k + 1, ncur] = CA[media] * ey[i + 1, j + 1, k + 1, npr1] + CB[media] * (hx[i + 1, j + 1, k + 1, ncur] - hx[i + 1, j + 1, k + 1 - 1, ncur] + hz[i + 1 - 1, j + 1, k + 1 - 1, ncur] - hz[ i + 1, j + 1, k + 1, ncur])
+                        ez[i + 1, j + 1, k + 1, ncur] = CA[media] * ez[i + 1, j + 1, k + 1, npr1] + CB[media] * (hy[i + 1, j + 1, k + 1, ncur] - hy[i + 1 - 1, j + 1, k + 1, ncur] + hx[i + 1, j + 1 - 1, k + 1 - 1, ncur] - hx[ i + 1, j + 1, k + 1, ncur])
 
+                        print(i + 1, '  ', j + 1, '  ', k + 1, '  ', ncur, '  ', ex[i + 1, j + 1, k + 1, ncur], '  ', ey[i + 1, j + 1, k + 1, ncur], '  ', ez[i + 1, j + 1, k + 1, ncur])
+                        # END of MAIN FDTD 1D Loop
+                        """
+                        if animOK == 1:
+                            title1 = 'EX and Hy field in FDTD 1D simulation.'
+                            plot_label1 = 'EX (Normalized) \n' + 'Time step: ' + str(nIter)
+                            plot_label2 = 'HY \n' + 'Time step: ' + str(nIter)
+                            line1.set_ydata(ex)                    
+                            line1.set_label(plot_label1)
+                            line2.set_ydata(hy)                    
+                            line2.set_label(plot_label2)
+                            ax.legend(loc = 'best')
+                            ax.relim()
+                            ax.autoscale_view(True, True, True)
+                            plt.draw()
+                            plt.pause(0.3)
 
-            
-                for k in range(1, ngridx - 1):
-                    if isLossy == 0:
-                        ex[k] += 0.5 * (hy[k - 1] - hy[k])                           # this is for non lossy medium
-                    else:
-                        ex[k] = ca[k] * ex[k] + cb[k] *  (hy[k - 1] - hy[k])         # this is for lossy medium
-
-                pulse = S.exp(-0.5 * ((centrePulseInc - tCount) / pulseSpread)**2)   # for Gaussian
-                ex[centreProbSpace] = pulse
-
-                if isABC == 1:
-                    ex[0] = ex_low_m2
-                    ex_low_m2 = ex_low_m1
-                    ex_low_m1 = ex[1]
-                    ex[ngridx - 1] = ex_hi_m2
-                    ex_hi_m2 = ex_hi_m1
-                    ex_hi_m1 = ex[ngridx - 2]
-                
-                for k in range(0, ngridx - 2):
-                    hy[k] += 0.5 * (ex[k] - ex[k + 1])
-
-                # END of MAIN FDTD 1D Loop
-                if animOK == 1:
-                    title1 = 'EX and Hy field in FDTD 1D simulation.'
-                    plot_label1 = 'EX (Normalized) \n' + 'Time step: ' + str(nIter)
-                    plot_label2 = 'HY \n' + 'Time step: ' + str(nIter)
-                    line1.set_ydata(ex)                    
-                    line1.set_label(plot_label1)
-                    line2.set_ydata(hy)                    
-                    line2.set_label(plot_label2)
-                    ax.legend(loc = 'best')
-                    ax.relim()
-                    ax.autoscale_view(True, True, True)
-                    plt.draw()
-                    plt.pause(0.3)
-        if plotOK == 1:
-            self.plot()
+                        if plotOK == 1:
+                            self.plot()
+                        """
             
         return self
             
@@ -221,6 +173,8 @@ class FDTD3D(object):
         ex     = self.ex
         hy     = self.hy
         ngridx = self.ngridx
+        ngridy = self.ngridy
+        ngridz = self.ngridz        
         nSteps = self.numSteps
         
         x = np.linspace(0, ngridx, ngridx)
